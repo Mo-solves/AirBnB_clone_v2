@@ -5,7 +5,7 @@ deploys archive to webservers
 """
 from fabric.api import env, put, run
 import os.path
-env.hosts = ['35.237.202.79', '34.204.185.51']
+env.hosts = ['52.55.249.213', '54.157.32.137']
 
 
 def do_deploy(archive_path):
