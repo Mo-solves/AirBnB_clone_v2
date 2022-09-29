@@ -1,66 +1,34 @@
 #!/usr/bin/python3
-"""
-Fabric script methods:
-do_pack: packs web_static/ files into .tgz archive
-do_deploy: deploys archive to webservers
-deploy: do_packs && do_deploys
-"""
-from fabric.api import local, env, put, run
-from time import strftime
+"""web server distribution"""
+from fabric.api import *
+from fabric.state import commands, connections
 import os.path
-env.hosts = ['35.237.202.79', '34.204.185.51']
 
-
-def do_pack():
-    """generate .tgz archive of web_static/ folder"""
-    timenow = strftime("%Y%M%d%H%M%S")
-    try:
-        local("mkdir -p versions")
-        filename = "versions/web_static_{}.tgz".format(timenow)
-        local("tar -cvzf {} web_static/".format(filename))
-        return filename
-    except ValueError:
-        return None
-
-
-def do_deploy(archive_path):
-    """
-    Deploy archive to web server
-    """
-    if os.path.isfile(archive_path) is False:
-        return False
-    try:
-        filename = archive_path.split("/")[-1]
-        no_ext = filename.split(".")[0]
-        path_no_ext = "/data/web_static/releases/{}/".format(no_ext)
-        symlink = "/data/web_static/current"
-        put(archive_path, "/tmp/")
-        run("mkdir -p {}".format(path_no_ext))
-        run("tar -xzf /tmp/{} -C {}".format(filename, path_no_ext))
-        run("rm /tmp/{}".format(filename))
-        run("mv {}web_static/* {}".format(path_no_ext, path_no_ext))
-        run("rm -rf {}web_static".format(path_no_ext))
-        run("rm -rf {}".format(symlink))
-        run("ln -s {} {}".format(path_no_ext, symlink))
-        return True
-    except ValueError:
-        return False
-
-
-def deploy():
-    archive_path = do_pack()
-    if archive_path is None:
-        return False
-    success = do_deploy(archive_path)
-    return success
+env.user = 'ubuntu'
+env.hosts = ["104.196.155.240", "34.74.146.120"]
+env.key_filename = "~/id_rsa"
 
 
 def do_clean(number=0):
+    """deletes out-of-date archives"""
+    local('ls -t ~/AirBnB_Clone_V2/versions/').split()
+    with cd("/data/web_static/releases"):
+        target_R = sudo("ls -t .").split()
+    paths = "/data/web_static/releases"
+    number = int(number)
     if number == 0:
-        number = 1
-    with cd.local('./versions'):
-        local("ls -lt | tail -n +{} | rev | cut -f1 -d" " | rev | \
-            xargs -d '\n' rm".format(1 + number))
-    with cd('/data/web_static/releases/'):
-        run("ls -lt | tail -n +{} | rev | cut -f1 -d" " | rev | \
-            xargs -d '\n' rm".format(1 + number))
+        num = 1
+    else:
+        num = number
+    if len(target_R) > 0:
+        if len(target) == number or len(target) == 0:
+            pass
+        else:
+            cl = target[num:]
+            for i in range(len(cl)):
+                local('rm -f ~/AirBnB_Clone_V2/versions/{}'.format(target[-1]))
+        rem = target_R[num:]
+        for j in range(len(rem)):
+            sudo('rm -rf {}/{}'.format(paths, rem[-1].strip(".tgz")))
+    else:
+        pass
